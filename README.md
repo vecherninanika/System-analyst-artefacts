@@ -28,7 +28,7 @@
 
 *Сохраненный пример успешного ответа на запрос GET /posts с пагинацией.*
 
-Файл с коллекцией: [`srs_dynamic_tariff.docx`](srs_dynamic_tariff.docx)
+Файл с коллекцией: [`DummyJSON_test.postman_collection.json`](DummyJSON_test.postman_collection.json)
 
 
 **Инструменты:** Drawio, PlantUML, Postman
