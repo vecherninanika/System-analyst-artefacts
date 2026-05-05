@@ -1,0 +1,46 @@
+@startuml
+actor "Пользователь" as User
+participant "Фронтенд" as Frontend
+participant "Сервис заказов" as OrderService
+participant "Складской сервис" as StockService
+participant "База данных" as DB
+participant "Платежная система" as PaymentSystem
+participant "Почтовый сервис" as EmailService
+
+User -> Frontend: Нажимает "оформить заказ"
+activate Frontend
+Frontend -> OrderService: POST /orders
+activate OrderService
+OrderService -> StockService: POST /reserve
+activate StockService
+StockService -> DB: SELECT FROM stock
+activate DB
+DB --> StockService: количество товара на складе (stock)
+deactivate DB
+alt stock >= необходимое количество
+    StockService --> OrderService: OK (товар забронирован)
+    deactivate StockService
+    OrderService -> PaymentSystem: POST /pay
+    activate PaymentSystem
+    PaymentSystem --> OrderService: OK (payment_id)
+    deactivate PaymentSystem
+    OrderService -> DB: INSERT INTO orders
+    activate DB
+    DB --> OrderService: OK (order_id)
+    deactivate DB
+    OrderService ->> EmailService: POST /send_email
+    activate EmailService
+    Note right of EmailService: Асинхронный вызов\nбез ожидания ответа
+    deactivate EmailService
+    OrderService --> Frontend: 201 CREATED (order_id)
+    Frontend --> User: "Заказ № order_id создан"
+else stock < необходимое количество
+    StockService --> OrderService: Error (недостаточно товаров)
+    deactivate StockService
+    OrderService --> Frontend: 400 BAD REQUEST (товар закончился)
+    Frontend --> User: "Товар закончился"
+end
+deactivate OrderService
+deactivate Frontend
+
+@enduml
