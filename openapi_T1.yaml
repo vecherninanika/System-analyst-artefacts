@@ -1,0 +1,527 @@
+openapi: 3.0.3
+info:
+  title: Swagger for "Corporate discounts" - OpenAPI 3.0
+  description: |-
+  termsOfService: http://swagger.io/terms/
+  contact:
+    email: apiteam@swagger.io
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.11
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
+servers:
+  - url: http://localhost:5269/swagger
+tags:
+  - name: Users
+    description: Company employee or administrator
+  - name: Offers
+    description: A discount or offer for the employees
+  - name: Categories
+    description: Offer categories
+  - name: Cities
+    description: Cities where the offers are available
+paths:
+  /users/login:
+    post:
+      tags:
+        - Users
+      summary: Enter the website with user credentials
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                  - email
+                  - password
+              properties:
+                email:
+                  type: string
+                  maxLength: 50
+                  example: email@gmail.com
+                password:
+                  type: string
+                  maxLength: 150
+                  example: 123
+      responses:
+        '200':
+          description: User logged in successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJlbWFpbEBnbWFpbC5jb20iLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsImV4cCI6MTczNTEzMTMxN30.5Lj6WA7Y2rccOor-dYZDJ6Es7mkbw-hvIdSh606CAws
+                  user:
+                    $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: User entered wrong email or password
+        '500':
+          description: Internal server error
+  /users/logout:
+    post:
+      tags:
+        - Users
+      summary: End user session
+      responses:
+        '200':
+          description: User logged out successfully
+        '401':
+          description: User is not authorized
+        '500':
+          description: Internal server error
+  /offers/active:
+    get:
+      tags:
+        - Offers
+      summary: Get all active offers with from the database
+      parameters:
+      - name: city
+        in: query
+        required: false
+        description: Filter to get offers available in this city
+        schema:
+          type: string
+          example: "Москва"
+      - name: category
+        in: query
+        required: false
+        description: Filter to get offers from this category
+        schema:
+          type: string
+          example: "Спорт"
+      responses:
+        '200':
+          description: Successfully received a list of offers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Offer'
+        '401':
+          description: User is not authorized. Only authorized users can access this page
+        '500':
+          description: Internal server error
+  /offers/draft:
+    get:
+      tags:
+        - Offers
+      summary: Get all draft offers with from the database
+      responses:
+        '200':
+          description: Successfully received a list of offers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Offer'
+        '403':
+          description: User must be authorized as administrator to access this page
+        '500':
+          description: Internal server error
+  /offers/archived:
+    get:
+      tags:
+        - Offers
+      summary: Get all archived offers with from the database
+      responses:
+        '200':
+          description: Successfully received a list of offers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Offer'
+        '403':
+          description: User must be authorized as administrator to access this page
+        '500':
+          description: Internal server error
+  /offers:
+    post:
+      tags:
+        - Offers
+      summary: Create a new offer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOffer'
+      responses:
+        '201':
+          description: Offer created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+        '400':
+          description: Invalid fields provided to create an offer
+        '401':
+          description: User is not authorized. Only authorized users can access this page
+        '404':
+          description: Start date cannot be bigger than end date.
+          
+          
+        '500':
+          description: Internal server error
+  /offers/{id}:
+    get:
+      tags:
+        - Offers
+      summary: Get one offer by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Offer found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+        '400':
+          description: Invalid ID provided
+        '401':
+          description: User is not authorized. Only authorized users can access this page
+        '404':
+          description: Offer not found
+        '500':
+          description: Internal server error
+    put:
+      tags:
+        - Offers
+      summary: Edit an existing offer by ID
+      parameters:
+        - name: id
+          in: path
+          description: ID of offer that needs to be updated
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/CreateOffer'
+      responses:
+        '201':
+          description: Offer updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+        '400':
+          description: Invalid fields provided to update an offer
+        '401':
+          description: User is not authorized. Only authorized users can access this page
+        '404':
+          description: Offer not found
+        '500':
+          description: Internal server error
+  /offers/archive/{id}:
+    put:
+      tags:
+        - Offers
+      summary: Add offer to archive by ID
+      parameters:
+        - name: id
+          in: path
+          description: ID of offer that needs to be archived
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Offer added to archive successfully
+        '204':
+          description: Offer is already in archive
+        '400':
+          description: Invalid ID provided
+        '401':
+          description: User is not authorized. Only authorized users can access this page
+        '404':
+          description: Offer not found
+        '500':
+          description: Internal server error
+  /categories:
+    get:
+      tags:
+        - Categories
+      summary: Get all categories from the database
+      responses:
+        '200':
+          description: Successfully received a list of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+        '401':
+          description: User must be authorized as administrator to access this page
+        '500':
+          description: Internal server error
+  /cities:
+    get:
+      tags:
+        - Cities
+      summary: Get all cities from the database
+      responses:
+        '200':
+          description: Successfully received a list of cities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/City'
+        '401':
+          description: User must be authorized as administrator to access this page
+        '500':
+          description: Internal server error
+components:
+  schemas:
+    UserResponse:
+      required:
+        - id
+        - email
+        - firstName
+        - lastName
+        - role
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 2
+        email:
+          type: string
+          format: email
+          maxLength: 50
+          example: user123@mail.com
+        firstName:
+          type: string
+          maxLength: 50
+          example: John
+        lastName:
+          type: string
+          maxLength: 50
+          example: James
+        role:
+          type: string
+          description: User Role
+          example: employee
+          enum:
+            - employee
+            - admin
+      xml:
+        name: user
+    Offer:
+      required:
+        - id
+        - status
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 2
+        name:
+          type: string
+          maxLength: 50
+          example: New offer
+        annotation:
+          type: string
+          maxLength: 150
+          example: Annotation
+        company_url:
+          type: string
+          maxLength: 1000
+          example: https://company.com/offer
+        description:
+          type: string
+          example: Description
+        start_date:
+          type: string
+          format: date-time
+          example: "2024-12-15T14:30:00+03:00"
+        end_date:
+          type: string
+          format: date-time
+          example: "2024-12-15T14:30:00+03:00"
+        offer_type:
+          type: string
+          description: Offer type
+          example: discount
+          enum:
+            - benefit
+            - discount
+        discount_size:
+          type: integer
+          format: int64
+          example: 20
+        status:
+          type: string
+          description: Offer type
+          example: draft
+          enum:
+            - active
+            - draft
+            - archived
+        category:
+          $ref: '#/components/schemas/Category'
+        links:
+          type: array
+          xml:
+            name: links
+            wrapped: true
+          items:
+            type: string
+            maxLength: 255
+            example: "https://link.com"
+        cities:
+          type: array
+          items:
+            $ref: '#/components/schemas/City'
+      xml:
+        name: offer
+    CreateOffer:
+      required:
+        - status
+        - links
+        - cities
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+          example: New offer
+        annotation:
+          type: string
+          maxLength: 150
+          example: Annotation
+        company_url:
+          type: string
+          maxLength: 1000
+          example: https://company.com/offer
+        description:
+          type: string
+          example: Description
+        start_date:
+          type: string
+          format: date-time
+          example: "2024-12-15T14:30:00+03:00"
+        end_date:
+          type: string
+          format: date-time
+          example: "2024-12-15T14:30:00+03:00"
+        offer_type:
+          type: string
+          description: Offer type
+          example: discount
+          enum:
+            - benefit
+            - discount
+        discount_size:
+          type: integer
+          format: int64
+          example: 20
+        status:
+          type: string
+          description: Offer type
+          example: draft
+          enum:
+            - active
+            - draft
+            - archived
+        category:
+          type: string
+          maxLength: 1000
+          example: Спорт
+        links:
+          type: array
+          xml:
+            name: links
+            wrapped: true
+          items:
+            type: string
+            maxLength: 255
+            example: "https://link.com"
+        cities:
+          type: array
+          xml:
+            name: links
+            wrapped: true
+          items:
+            type: string
+            maxLength: 50
+            example: Москва
+      xml:
+        name: offerresponse
+    Category:
+      required:
+        - id
+        - name
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 2
+        name:
+          type: string
+          maxLength: 50
+          example: Спорт
+      xml:
+        name: category
+    City:
+      required:
+        - id
+        - name
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 2
+        name:
+          type: string
+          maxLength: 50
+          example: Москва
+      xml:
+        name: city
+  requestBodies:
+    Offer:
+      description: Offer object that needs to be added to the offers
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Offer'
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Offer'
+    User:
+      description: User object that needs to be added to the users
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserResponse'
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/UserResponse'
